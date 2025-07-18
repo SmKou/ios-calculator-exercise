@@ -1,22 +1,3 @@
-/**
- * Calculator:
- * Follows order of PEMDAS to form a tree
- * 1. parens
- * 2. exponent
- * 3. multiplication and division
- * 4. addition and subtraction
- * Note: not including parens or exponent, only MDAS
- *
- * C: Clear - clears the display
- * Backspace - deletes last number in display, or zeroes
- * Equal - performs current operation
- *
- * Plus (+): add left and right
- * Minus (-): subtract right from left
- * Times (*): multiply left and right
- * Divide (/): divide left by right
- */
-
 import './style.css'
 
 const get_e = id => document.getElementById(id)
@@ -29,16 +10,17 @@ const equ = {
 	root: null,	// tree of equation
 }
 
-for (let i = 0; i < 10; ++i)
+for (let i = 0; i < 10; ++i) {
 	get_e(`n${i}-btn`).addEventListener("click", () => {
 		const txt = disp.innerHTML
 		if (!Number(txt) && i !== 0)
 			disp.innerHTML = i
-		else if (txt.length)
-			disp.innerHTML = txt + i
-		else
-			disp.innerHTML = i
+			else if (txt.length)
+				disp.innerHTML = txt + i
+				else
+					disp.innerHTML = i
 	})
+}
 
 get_e("addition-btn")
 .addEventListener("click", () => {
@@ -86,16 +68,29 @@ get_e("backspace-btn")
 		disp.innerHTML = txt.slice(0, txt.length - 1)
 })
 
-const solve = () => {
-	let curr = equ.root
-	while (curr.left)
-		curr = curr.left
+const operate = (op, left, right) => {
+	switch (op) {
+		case "+":
+			return left + right
+		case "-":
+			return left - right
+		case "*":
+			return left * right
+		case "/":
+			return left / right
+	}
+}
+
+const solve = curr => {
+	if (!curr.left && !curr.right)
+		return curr.v
+	return operate(curr.v, solve(curr.left), solve(curr.right))
 }
 
 get_e("equal-btn")
 .addEventListener("click", () => {
-	console.log(equ.view)
 	const txt = disp.innerHTML
 	if (txt.length)
 		equ.root.right = node(Number(txt))
-})
+	const sol = solve(equ.root)
+	console.log(equ.view, sol)
