@@ -6,55 +6,59 @@ const node = (v = "", left = null, right = null) => ({ v, left, right })
 const disp = get_e("display")
 const equ = {
 	mem: 0,			// last calculated value
-	view: "",		// rep. of equation
-	root: null,	// tree of equation
+	root: null,		// tree of equation
 }
 
-for (let i = 0; i < 10; ++i) {
-	get_e(`n${i}-btn`).addEventListener("click", () => {
-		const txt = disp.innerHTML
-		if (!Number(txt) && i !== 0)
-			disp.innerHTML = i
-			else if (txt.length)
-				disp.innerHTML = txt + i
-				else
-					disp.innerHTML = i
-	})
+const num = (idx) => () => {
+	const txt = disp.innerHTML
+	if (!Number(txt) && idx !== 0)
+		disp.innerHTML = idx
+	else if (txt.length)
+		disp.innerHTML = txt + idx
+	else
+		disp.innerHTML = idx
+}
+
+for (let i = 0; i < 10; ++i)
+	get_e(`n${i}-btn`).addEventListener("click", num(i))
+
+const add_operation = (type) => () => {
+	const n = Number(disp.innerHTML)
+	switch (type) {
+		case "-":
+			equ.root = node("-", node(n, equ.root))
+			break;
+		case "+":
+			equ.root = node("+", node(n, equ.root))
+			break;
+		case "*":
+		case "x":
+			if (!equ.root)
+				equ.root = node("*", node(n, equ.root))
+			else {
+				const m = node("*", equ.root.right, n)
+				equ.root.right = m
+			}
+			break;
+		case "/":
+			const d = node("/", equ.root.right, n)
+			equ.root.right = d
+			break;
+	}
+	disp.innerHTML = ""
 }
 
 get_e("addition-btn")
-.addEventListener("click", () => {
-	const n = Number(disp.innerHTML)
-	equ.root = node("+", node(n, equ.root))
-	equ.view += ` + ${n}`
-	disp.innerHTML = ""
-})
+.addEventListener("click", add_operation("+"))
 
 get_e("subtraction-btn")
-.addEventListener("click", () => {
-	const n = Number(disp.innerHTML)
-	equ.root = node("-", node(n, equ.root))
-	equ.view += ` - ${n}`
-	disp.innerHTML = ""
-})
+.addEventListener("click", add_operation("-"))
 
 get_e("multiplication-btn")
-.addEventListener("click", () => {
-	const n = Number(disp.innerHTML)
-	const m = node("*", equ.root.right, n)
-	equ.root.right = m
-	equ.view += ` * ${n}`
-	disp.innerHTML = ""
-})
+.addEventListener("click", add_operation("*"))
 
 get_e("division-btn")
-.addEventListener("click", () => {
-	const n = Number(disp.innerHTML)
-	const d = node("/", equ.root.right, n)
-	equ.root.right = d
-	equ.view += ` / ${n}`
-	disp.innerHTML = ""
-})
+.addEventListener("click", add_operation("/"))
 
 get_e("clear-btn")
 .addEventListener("click", () => {
@@ -68,29 +72,75 @@ get_e("backspace-btn")
 		disp.innerHTML = txt.slice(0, txt.length - 1)
 })
 
-const operate = (op, left, right) => {
-	switch (op) {
-		case "+":
-			return left + right
+const operate = (sym, left, right) => {
+	switch (sym) {
 		case "-":
 			return left - right
+		case "+":
+			return left + right
 		case "*":
+		case "x":
 			return left * right
 		case "/":
 			return left / right
 	}
 }
 
-const solve = curr => {
+const solve = (curr = equ.node) => {
 	if (!curr.left && !curr.right)
 		return curr.v
-	return operate(curr.v, solve(curr.left), solve(curr.right))
+	const left = solve(curr.left)
+	const right = solve(curr.right)
+	return operate(sym, left, right)
 }
 
 get_e("equal-btn")
 .addEventListener("click", () => {
-	const txt = disp.innerHTML
-	if (txt.length)
-		equ.root.right = node(Number(txt))
-	const sol = solve(equ.root)
-	console.log(equ.view, sol)
+	const n = Number(disp.innerHTML)
+
+	let curr = equ.root
+	while(curr.right)
+		curr = curr.right
+	curr.right = node(n)
+
+	const sol = solve()
+	equ.mem = sol
+	equ.root = null
+	disp.innerHTML = sol + ""
+
+})
+
+document.addEventListener("keydown", e => {
+	switch (e.key) {
+		case "-":
+		case "+":
+		case "*":
+		case "x":
+		case "/":
+			operate(e.key)()
+			break;
+		case "0":
+		case "1":
+		case "2":
+		case "3":
+		case "4":
+		case "5":
+		case "6":
+		case "7":
+		case "8":
+		case "9":
+			num(e.key)
+		case "c":
+			disp.innerHTML = "0"
+			break;
+	}
+})
+
+
+// get_e("equal-btn")
+// .addEventListener("click", () => {
+// 	const txt = disp.innerHTML
+// 	if (txt.length)
+// 		equ.root.right = node(Number(txt))
+// 	const sol = solve()
+// 	console.log(equ.view, sol)
