@@ -1,146 +1,82 @@
 import './style.css'
 
-const get_e = id => document.getElementById(id)
-const node = (v = "", left = null, right = null) => ({ v, left, right })
-
-const disp = get_e("display")
 const equ = {
-	mem: 0,			// last calculated value
-	root: null,		// tree of equation
+	mem: null,
+	root: null
 }
 
+/* ------------------------------------------------ HELPERS */
+const get_e = id => document.getElementById(id)
+const display = get_e("display")
+const get_disp = () => display.innerHTML
+const set_disp = (value) => display.innerHTML = value
+const create_node = (value, left = null, right = null) => ({ value, left, right })
+
+/* ------------------------------------------------ FUNCTIONS */
 const num = (idx) => () => {
-	const txt = disp.innerHTML
-	if (!Number(txt) && idx !== 0)
-		disp.innerHTML = idx
-	else if (txt.length)
-		disp.innerHTML = txt + idx
+	const n = display.innerHTML
+	if (Number(n))
+		display.innerHTML = n + idx
 	else
-		disp.innerHTML = idx
+		display.innerHTML = idx
 }
 
-for (let i = 0; i < 10; ++i)
-	get_e(`n${i}-btn`).addEventListener("click", num(i))
-
-const add_operation = (type) => () => {
-	const n = Number(disp.innerHTML)
-	switch (type) {
-		case "-":
-			equ.root = node("-", node(n, equ.root))
-			break;
-		case "+":
-			equ.root = node("+", node(n, equ.root))
-			break;
-		case "*":
-		case "x":
-			if (!equ.root)
-				equ.root = node("*", node(n, equ.root))
-			else {
-				const m = node("*", equ.root.right, n)
-				equ.root.right = m
-			}
-			break;
-		case "/":
-			const d = node("/", equ.root.right, n)
-			equ.root.right = d
-			break;
-	}
-	disp.innerHTML = ""
-}
-
-get_e("addition-btn")
-.addEventListener("click", add_operation("+"))
-
-get_e("subtraction-btn")
-.addEventListener("click", add_operation("-"))
-
-get_e("multiplication-btn")
-.addEventListener("click", add_operation("*"))
-
-get_e("division-btn")
-.addEventListener("click", add_operation("/"))
-
-get_e("clear-btn")
-.addEventListener("click", () => {
-	disp.innerHTML = "0"
-})
-
-get_e("backspace-btn")
-.addEventListener("click", () => {
-	const txt = disp.innerHTML
-	if (txt.length)
-		disp.innerHTML = txt.slice(0, txt.length - 1)
-})
-
-const operate = (sym, left, right) => {
+const operate = (sym) => {
 	switch (sym) {
-		case "-":
-			return left - right
 		case "+":
-			return left + right
-		case "*":
+			return (left, right) => left + right
+		case "-":
+			return (left, right) => left - right
 		case "x":
-			return left * right
+			return (left, right) => left * right
 		case "/":
-			return left / right
+			return (left, right) => left / right
 	}
 }
 
-const solve = (curr = equ.node) => {
-	if (!curr.left && !curr.right)
-		return curr.v
-	const left = solve(curr.left)
-	const right = solve(curr.right)
-	return operate(sym, left, right)
+const operations = {
+	division: {
+		sym: "/",
+		op: operate("/")
+	},
+	multiplication: {
+		sym: "x",
+		op: operate("x")
+	},
+	subtraction: {
+		sym: "-",
+		op: operate("-")
+	},
+	addition: {
+		sym: "+",
+		op: operate("+")
+	}
 }
 
-get_e("equal-btn")
-.addEventListener("click", () => {
-	const n = Number(disp.innerHTML)
+const solve = () => {}
 
-	let curr = equ.root
-	while(curr.right)
-		curr = curr.right
-	curr.right = node(n)
+/* ------------------------------------------------ INTERFACE */
+for (let i = 0; i < 10; ++i)
+	get_e(`#n${i}-btn`).addEventListener("click", num(i))
 
-	const sol = solve()
-	equ.mem = sol
-	equ.root = null
-	disp.innerHTML = sol + ""
-
+get_e("#clear-btn").addEventListener("click", () => {
+	const n = get_disp()
+	set_disp(n ? 0 : "")
 })
 
-document.addEventListener("keydown", e => {
-	switch (e.key) {
-		case "-":
-		case "+":
-		case "*":
-		case "x":
-		case "/":
-			operate(e.key)()
-			break;
-		case "0":
-		case "1":
-		case "2":
-		case "3":
-		case "4":
-		case "5":
-		case "6":
-		case "7":
-		case "8":
-		case "9":
-			num(e.key)
-		case "c":
-			disp.innerHTML = "0"
-			break;
+get_e("backspace-btn").addEventListener("click", () => {
+	const n = get_disp()
+	set_disp(n ? n.slice(0, n.length - 1) : "")
+})
+
+for (const key of Object.keys(operations)) {
+	const btn = get_e(key + "-btn")
+	if (!equ.root)
+		equ.root = create_node(operations[key].sym, create_node(get_disp))
+	else {
+		let curr = equ.root
+		while (curr.right)
+			curr = curr.right
+		curr.right = create_node(get_disp)
 	}
-})
-
-
-// get_e("equal-btn")
-// .addEventListener("click", () => {
-// 	const txt = disp.innerHTML
-// 	if (txt.length)
-// 		equ.root.right = node(Number(txt))
-// 	const sol = solve()
-// 	console.log(equ.view, sol)
+}
