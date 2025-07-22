@@ -14,11 +14,8 @@ const create_node = (value, left = null, right = null) => ({ value, left, right 
 
 /* ------------------------------------------------ FUNCTIONS */
 const num = (idx) => () => {
-	const n = display.innerHTML
-	if (Number(n))
-		display.innerHTML = n + idx
-	else
-		display.innerHTML = idx
+	const n = get_disp()
+	set_disp(n ? n + idx : idx)
 }
 
 const operate = (sym) => {
@@ -53,6 +50,14 @@ const operations = {
 	}
 }
 
+const print = (node = equ.root) => {
+	if (!node)
+		return ""
+	if (!node.left && !node.right)
+		return node.value
+	return print(node.left) + " " + print(node.right)
+}
+
 const solve = () => {}
 
 /* ------------------------------------------------ INTERFACE */
@@ -69,14 +74,20 @@ get_e("backspace-btn").addEventListener("click", () => {
 	set_disp(n ? n.slice(0, n.length - 1) : "")
 })
 
+
+// Forgot: branch shifting - refer original problem
 for (const key of Object.keys(operations)) {
 	const btn = get_e(key + "-btn")
-	if (!equ.root)
-		equ.root = create_node(operations[key].sym, create_node(get_disp))
-	else {
-		let curr = equ.root
-		while (curr.right)
-			curr = curr.right
-		curr.right = create_node(get_disp)
-	}
+	btn.addEventListener("click", () => {
+		if (!equ.root)
+			equ.root = create_node(operations[key].sym, create_node(get_disp()))
+		else {
+			let curr = equ.root
+			while (curr.right)
+				curr = curr.right
+				curr.right = create_node(get_disp())
+		}
+		set_disp("")
+		console.log(print())
+	})
 }
