@@ -27,6 +27,7 @@ const solve = (curr = equ.root) => {
 		return equ.mem ? equ.mem : 0
 	if (!curr.left && !curr.right)
 		return Number(curr.value)
+	console.log(...Object.values(curr))
 	switch (curr.value) {
 		case "-":
 			return solve(curr.left) - solve(curr.right)
@@ -91,7 +92,9 @@ for (const key of Object.keys(operations)) {
 			}
 			equ.last_op = sym
 			set_disp("")
-			set_sol(solve())
+			const sol = solve()
+			set_sol(sol)
+			console.log(sol)
 		}
 	get_e(key + "-btn").addEventListener("click", add_to_tree)
 }
