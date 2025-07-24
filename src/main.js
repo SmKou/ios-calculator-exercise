@@ -16,6 +16,7 @@ const create_node = (value, left = null, right = null) => ({ value, left, right 
 const num = (idx) => () => {
 	const n = get_disp()
 	set_disp(n ? n + idx : idx)
+	console.log(n, idx)				// testing
 }
 
 const operate = (sym) => {
@@ -62,16 +63,18 @@ const solve = () => {}
 
 /* ------------------------------------------------ INTERFACE */
 for (let i = 0; i < 10; ++i)
-	get_e(`#n${i}-btn`).addEventListener("click", num(i))
+	get_e(`n${i}-btn`).addEventListener("click", num(i))
 
-get_e("#clear-btn").addEventListener("click", () => {
+get_e("clear-btn").addEventListener("click", () => {
 	const n = get_disp()
 	set_disp(n ? 0 : "")
+	console.log(n)					// testing
 })
 
 get_e("backspace-btn").addEventListener("click", () => {
 	const n = get_disp()
 	set_disp(n ? n.slice(0, n.length - 1) : "")
+	console.log(n, n.slice(0, n.length - 1))
 })
 
 
@@ -88,6 +91,6 @@ for (const key of Object.keys(operations)) {
 				curr.right = create_node(get_disp())
 		}
 		set_disp("")
-		console.log(print())
+		console.log(key, print())
 	})
 }
