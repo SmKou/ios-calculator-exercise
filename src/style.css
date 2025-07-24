@@ -2,7 +2,7 @@ body {
 	position: fixed;
 	width: 100%;
 	height: 100%;
-	border: 0;
+	margin: 0;
 	overflow: hidden;
 	display: flex;
 	align-items: center;
@@ -25,14 +25,30 @@ main {
 .span-3 { grid-column: span 3 }
 .span-full { grid-column: span 4 }
 
-#display {
-	padding-right: 12px;
+div {
 	display: flex;
 	align-items: center;
-	justify-content: right;
-	color: white;
 	background: black;
+}
+
+div span {
+	position: relative;
+	width: 50%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	color: white;
 	font-size: 42px;
+}
+
+#solution {
+	padding-left: 12px;
+	justify-content: left;
+}
+
+#display {
+	padding-right: 12px;
+	justify-content: right;
 }
 
 button {

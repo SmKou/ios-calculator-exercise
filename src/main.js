@@ -4,6 +4,8 @@ const get_e = id => document.getElementById(id)
 const display = get_e("display")
 const get_disp = () => display.innerHTML
 const set_disp = (value) => display.innerHTML = value
+const solution = get_e("solution")
+const set_sol = (value) => solution.innerHTML = value
 const node = (value, left = null, right = null) => ({ value, left, right })
 
 const operations = {
@@ -22,7 +24,7 @@ const equ = {
 
 const solve = (curr = equ.root) => {
 	if (!curr)
-		return 0
+		return equ.mem ? equ.mem : 0
 	if (!curr.left && !curr.right)
 		return Number(curr.value)
 	switch (curr.value) {
@@ -48,6 +50,7 @@ get_e("clear-btn").addEventListener("click", () => {
 	if (n)
 		set_disp(0)
 	else {
+		set_sol("")
 		set_disp("")
 		equ.mem = null
 		equ.root = null
@@ -87,7 +90,8 @@ for (const key of Object.keys(operations)) {
 				equ.add_right = equ.add_right.right
 			}
 			equ.last_op = sym
-			set_disp(solve())
+			set_disp("")
+			set_sol(solve())
 		}
 	get_e(key + "-btn").addEventListener("click", add_to_tree)
 }
@@ -99,9 +103,10 @@ get_e("equal-btn").addEventListener("click", () => {
 	equ.add_right.right = node(n)
 
 	const sol = solve()
-	set_disp(sol)
+	set_sol(sol)
+	set_disp("")
 	equ.mem = sol
-	equ.root = node(sol)
+	equ.root = null
 	equ.add_right = null
 	equ.last_op = ""
 })
