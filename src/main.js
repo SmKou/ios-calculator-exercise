@@ -1,115 +1,189 @@
 import './style.css'
 
-const get_e = id => document.getElementById(id)
-const display = get_e("display")
-const get_disp = () => display.innerHTML
-const set_disp = (value) => display.innerHTML = value
-const solution = get_e("solution")
-const set_sol = (value) => solution.innerHTML = value
-const node = (value, left = null, right = null) => ({ value, left, right })
-
-const operations = {
-	division: "/",
-	multiplication: "x",
-	subtraction: "-",
-	addition: "t"
+const e = id => document.getElementById(id)
+const display = {
+	get: () => e("display").innerHTML,
+	set: value => e("display").innerHTML = value
 }
-
-const equ = {
-	mem: null,
+const solution = {
+	get: () => e("solution").innerHTML,
+	set: value => e("solution").innerHTML = value
+}
+const equation = {
+	mem: [],
 	root: null,
 	add_right: null,
 	last_op: ""
 }
+const node = (value, left = null, right = null) => ({ value, left, right })
 
-const solve = (curr = equ.root) => {
-	if (!curr)
-		return equ.mem ? equ.mem : 0
-	if (!curr.left && !curr.right)
-		return Number(curr.value)
-	console.log(...Object.values(curr))
-	switch (curr.value) {
-		case "-":
-			return solve(curr.left) - solve(curr.right)
-		case "t":
-			return solve(curr.left) + solve(curr.right)
-		case "x":
-			return solve(curr.left) * solve(curr.right)
-		case "/":
-			return solve(curr.left) / solve(curr.right)
-	}
-}
-
-for (let i = 0; i < 10; ++i)
-	get_e(`n${i}-btn`).addEventListener("click", () => {
-		const n = get_disp()
-		set_disp(Number(n) ? n + i : i)
-	})
-
-get_e("clear-btn").addEventListener("click", () => {
-	const n = get_disp()
-	if (n)
-		set_disp(0)
+const add_or_sub = (sym) => () => {
+	const n = display.get()
+	const use_n = n ? n : equation.mem.length ? equation.mem.at(-1) : 0
+	if (!equation.root)
+		equation.root = node(sym, node(use_n))
 	else {
-		set_sol("")
-		set_disp("")
-		equ.mem = null
-		equ.root = null
-		equ.add_right = null
-		equ.last_op = null
+		if (["x", "/"].includes(equation.last_op))
+			equation.add_right = equation.root
+		equation.add_right.right = node(use_n)
+		equation.root = node(sym, equation.add_right)
+	}
+	equation.add_right = equation.root
+	equation.last_op = sym
+	display.set("")
+	solution.set()				// TO-DO
+}
+
+const mult_or_div = (sym) => () => {
+	const n = display.get()
+	const use_n = n ? n : equation.mem.length ? equation.mem.at(-1) : 0
+	if (!equation.root) {
+		equation.root = node(sym, node(use_n))
+		equation.add_right = equation.root
+	}
+	else {
+		equation.add_right.right = node(sym, node(use_n))
+		equation.add_right = equation.add_right.right
+	}
+	equation.last_op = sym
+	display.set("")
+	solution.set()				// TO-DO
+}
+
+const solve = (current = equation.root) => {
+	if (!current)
+		return equation.mem.length ? equation.mem.at(-1) : 0
+	if (!current.left && !current.right)
+		return current.value
+	const left = solve(current.left)
+	const right = solve(current.right)
+
+	let working_solution = left
+	switch (current.value) {
+		case "t":
+			working_solution = left + right
+			break;
+		case "-":
+			working_solution = left - right
+			break;
+		case "x":
+			working_solution = left * right
+			break;
+		case "/":
+			working_solution = left / right
+			break;
+	}
+
+
+	return working_solution
+}
+
+const operations = ["addition", "subtraction", "multiplication", "division"]
+const symbols = ["t", "-", "x", "/"]
+for (let i = 0; i < operations.length; ++i) {
+	const btn = e(operations[i] + "-btn")
+	const op = i < 2 ? add_or_sub(symbols[i]) : mult_or_div(symbols[i])
+	btn.addEventListener("click", op)
+}
+
+
+
+e("clear-btn").addEventListener("click", () => {})
+
+e("backspace-btn").addEventListener("click", () => {})
+
+e("equals-btn").addEventListener("click", () => {})
+
+document.querySelector("main").addEventListener("keydown", ({ key }) => {
+	if (Number(key)) {}
+	switch (key) {
+		case "Backspace":
+		case "Enter":
 	}
 })
 
-get_e("backspace-btn").addEventListener("click", () => {
-	const n = get_disp()
-	set_disp(n ? n.slice(0, n.length - 1) : "")
-})
-
-for (const key of Object.keys(operations)) {
-	const sym = operations[key]
-	const add_to_tree = ["-", "+"].includes(sym)
-		? () => {
-			if (!equ.root)
-				equ.root = node(sym, equ.mem ? equ.mem : get_disp())
-			else {
-				if (["/", "x"].includes(equ.last_op))
-					equ.add_right = equ.root
-				equ.add_right.right = node(get_disp())
-				equ.root = node(sym, equ.add_right)
-			}
-			equ.add_right = equ.root
-			equ.last_op = sym
-			set_disp(solve())
-		}
-		: () => {
-			if (!equ.root) {
-				equ.root = node(sym, node(get_disp()))
-				equ.add_right = equ.root
-			}
-			else {
-				equ.add_right.right = node(sym, node(get_disp()))
-				equ.add_right = equ.add_right.right
-			}
-			equ.last_op = sym
-			set_disp("")
-			const sol = solve()
-			set_sol(sol)
-			console.log(sol)
-		}
-	get_e(key + "-btn").addEventListener("click", add_to_tree)
-}
-
-get_e("equal-btn").addEventListener("click", () => {
-	if (!equ.root)
-		return;
-	const n = get_disp()
-	equ.add_right.right = node(n)
-
-	const sol = solve()
-	set_sol(sol)
-	set_disp("")
-	equ.mem = sol
-	equ.root = null
-	equ.add_right = null
-	equ.last_op = ""
-})
+// const operations = {
+// 	division: "/",
+// 	multiplication: "x",
+// 	subtraction: "-",
+// 	addition: "t"
+// }
+//
+// const equ = {
+// 	mem: [],
+// 	root: "",
+// 	add_right: "",
+// 	last_op: ""
+// }
+//
+// for (let i = 0; i < 10; ++i)
+// 	get_e(`n${i}-btn`).addEventListener("click", () => {
+// 		const n = get_disp()
+// 		if (mem.at(-1) == n)
+// 		set_disp(Number(n) ? n + i : i)
+// 	})
+//
+// get_e("clear-btn").addEventListener("click", () => {
+// 	const n = get_disp()
+// 	if (n) {
+// 		console.log("clear display")
+// 		set_disp(equ.mem)
+// 	}
+// 	else {
+// 		console.log("clear memory")
+// 		equ.mem = ""
+// 		set_sol(equ.mem)
+// 	}
+// })
+//
+// get_e("backspace-btn").addEventListener("click", () => {
+// 	const n = get_disp()
+// 	set_disp(n ? n.slice(0, n.length - 1) : "")
+// })
+//
+// for (const key of Object.keys(operations)) {
+// 	const sym = operations[key]
+// 	const add_to_tree = ["-", "+"].includes(sym)
+// 		? () => {
+//
+// 		}
+// 		: () => {
+// 		}
+// 	get_e(key + "-btn").addEventListener("click", add_to_tree)
+// }
+//
+// get_e("equal-btn").addEventListener("click", () => {
+// 	if (!equ.root)
+// 		return;
+// 	const n = get_disp()
+// 	equ.add_right.right = node(n)
+//
+// 	equ.mem = solve()
+// 	set_sol(equ.mem)
+// 	set_disp("")
+//
+// 	equ.root = ""
+// 	equ.add_right = ""
+// 	equ.last_op = ""
+// })
+//
+// document.querySelector("main").addEventListener("keydown", e => {
+// 	const { key } = e
+// 	if ("1234567890".includes(key)) {
+// 		const n = get_disp()
+// 		set_disp(n ? n + key : key)
+// 	}
+//
+// 	if ("-t".includes(key)) {}
+//
+// 	if ("/x".includes(key)) {}
+//
+// 	if (key === "Backspace") {
+// 		const n = get_disp()
+// 		if (n)
+// 			set_disp(n.slice(0, n.length - 1))
+// 		else {
+//
+// 		}
+// 	}
+// })
