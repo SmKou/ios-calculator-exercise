@@ -12,74 +12,12 @@ const equ = {
 	last_op: ""
 }
 
-/* Scenario
- * {
- * 		mem: [],
- * 		num: "",
- * 		root: null,
- * 		add_right: null,
- * 		last_op: ""
- * }, display: ""
- *
- * 1 + => {
- * 		mem: [1],
- * 		root: { +, left: { value: 1 }},
- * 		add_right: root,
- * 		last_op: +
- * }, display: 1
- * 1 = => {
- * 		mem: [2],
- * 		root: null,
- * 		add_right: null,
- * 		last_op: =
- * } display: 2
- *
- * 1 + => {
- * 		mem: [2, 1],
- * 		root: { +, left: { 1 }},
- * 		add_right: root,
- * 		last_op: +
- * }, display: 1
- * 2 x => {
- * 		mem: [2, 2],
- * 		root: { +, left: { 1 }, right: { x, { 2 }} },
- * 		add_right: root.right,
- * 		last_op: x
- * }, display: 2
- * 3 = => {
- * 		mem: [2, 7],
- * 		root: null,
- * 		add_right: null,
- * 		last_op: =
- * }, display: 7
- *
- * + => {
- * 		mem: [2, 7, 7],
- * 		root: { +, left: { 7 }},
- * 		add_right: root,
- * 		last_op: +
- * }, display: 7
- * 3 x => {
- * 		mem: [2, 7, 10],
- * 		root: { +, left: { 7 }, right: { x, left: { 3 }} },
- * 		add_right: root.right.right
- * 		last_op: x
- * }, display: 10
- * 2 = => {
- * 		mem: [2, 7, 13],
- * 		root: null,
- * 		add_right: null,
- * 		last_op: =
- * }, display: 13
- */
-
 for (let i = 0; i < 10; ++i) {
 	const btn = e(`n${i}-btn`)
 	btn.addEventListener("click", () => {
-		if (equ.num)
-			equ.num += i
-		else
-			equ.num = i
+		if (!Number(equ.num))
+			equ.num = ""
+		equ.num += i
 		set(equ.num)
 	})
 }
@@ -168,25 +106,28 @@ const add = () => {
 	const nomatch = ["x", '/'].includes(equ.last_op)
 	if (!equ.num)
 		equ.num = equ.mem.length ? equ.mem.at(-1) : 0
-
-	replace_root("t", nomatch)
+	add_root("t", nomatch)
 	update_equ("t")
 }
 
 const subtract = () => {
-	const n = init()
-	replace_root("-", n, ["x", '/'].includes(equ.last_op))
+	const nomatch = ["x", "/"].includes(equ.last_op)
+	if (!equ.num)
+		equ.num = equ.mem.at(-1) || 0
+	add_root("-", nomatch)
 	update_equ("-")
 }
 
 const multiply = () => {
-	const n = init()
+	if (!equ.num)
+		equ.num = equ.mem.at(-1) || 0
 	add_branch("x", n)
 	update_equ("x")
 }
 
 const divide = () => {
-	const n = init()
+	if (!equ.num)
+		equ.num = equ.mem.at(-1) || 0
 	add_branch("/", n)
 	update_equ("/")
 }
