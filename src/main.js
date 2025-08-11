@@ -12,41 +12,45 @@ const equ = {
 	last_op: ""
 }
 
-for (let i = 0; i < 10; ++i) {
-	const btn = e(`n${i}-btn`)
-	btn.addEventListener("click", () => {
-		if (!Number(equ.num))
-			equ.num = ""
-		equ.num += i
-		set(equ.num)
-	})
+const number = (digit) => () => {
+	if (!Number(equ.num))
+		equ.num = ""
+	equ.num += digit
+	set(equ.num)
 }
 
+for (let i = 0; i < 10; ++i) {
+	const btn = e(`n${i}-btn`)
+	const fn = number(i)
+	btn.addEventListener("click", fn)
+}
+// number btns
+
 const clear = () => {
-	if (equ.num) {
+	if (equ.num)
 		equ.num = ""
-		set(equ.num)
-	}
-	else if (equ.mem.length) {
+	else if (equ.mem.length)
 		equ.mem = []
-		set("")
-	}
+	set("")
 }
 e("clear-btn").addEventListener("click", clear)
 
 const backspace = () => {
+	let disp = ""
 	if (equ.num) {
 		equ.num = equ.num.slice(0, -1)
-		set(equ.num)
+		disp += equ.num
 	}
 	else if (equ.mem.length)
-		set(equ.mem.at(-1))
+		disp += equ.mem.at(-1)
 	else
-		set(0)
-
+		disp += 0
+	set(disp)
 	return true
 }
 e("backspace-btn").addEventListener("click", backspace)
+
+/* ------------------------------- Number operations */
 
 const add_root = (sym, is_last_nomatch) => {
 	if (!equ.root)
@@ -78,20 +82,27 @@ const solve = (current = equ.root) => {
 			return equ.mem.at(-1)
 		else
 			return ""
+	console.log("value", current.value, typeof current.value)
 	if (!current.left && !current.right)
-		return current.value
+		return Number(current.value)
 	const left = solve(current.left)
 	const right = solve(current.right)
-	switch (current.value) {
-		case "t":
-			return left + right
-		case "-":
-			return left - right
-		case "x":
-			return left * right
-		case "/":
-			return left / right
-	}
+	console.log("solve-left", left, typeof left)
+	console.log("solve-right", right, typeof right)
+	const sol = ((v, left, right) => {
+		switch (v) {
+			case "t":
+				return left + right
+			case "-":
+				return left - right
+			case "x":
+				return left * right
+			case "/":
+				return left / right
+		}
+	})(current.value, left, right)
+	console.log("solution", sol, typeof sol)
+	return Number(sol)
 }
 
 const update_equ = (sym) => {
@@ -102,34 +113,47 @@ const update_equ = (sym) => {
 	equ.last_op = sym
 }
 
+/* -------------------------- Arithmetic Operations */
+
+const init = () => {
+	if (!equ.num && !equ.mem.length)
+		return;
+	if (!equ.num) {
+		equ.mem.push(equ.mem.at(-1))
+		equ.num = equ.mem.at(-1)
+	}
+}
+
 const add = () => {
 	const nomatch = ["x", '/'].includes(equ.last_op)
-	if (!equ.num)
-		equ.num = equ.mem.length ? equ.mem.at(-1) : 0
+	init()
 	add_root("t", nomatch)
 	update_equ("t")
 }
 
 const subtract = () => {
 	const nomatch = ["x", "/"].includes(equ.last_op)
-	if (!equ.num)
-		equ.num = equ.mem.at(-1) || 0
+	init()
 	add_root("-", nomatch)
 	update_equ("-")
 }
 
 const multiply = () => {
-	if (!equ.num)
-		equ.num = equ.mem.at(-1) || 0
-	add_branch("x", n)
+	init()
+	add_branch("x")
 	update_equ("x")
 }
 
 const divide = () => {
-	if (!equ.num)
-		equ.num = equ.mem.at(-1) || 0
-	add_branch("/", n)
+	init()
+	add_branch("/")
 	update_equ("/")
+}
+
+const equals = () => {
+	init()
+	equ.add_right.right = node(equ.num)
+	update_equ("=")
 }
 
 const operations = {
@@ -148,6 +172,10 @@ const operations = {
 	"/": {
 		name: "division",
 		fn: divide
+	},
+	"=": {
+		name: "equals",
+		fn: equals
 	}
 }
 
@@ -155,51 +183,32 @@ for (const op of Object.keys(operations)) {
 	const btn = e(operations[op].name + "-btn")
 	btn.addEventListener("click", operations[op].fn)
 }
-
-
-
-const equals = () => {
-	const solution = solve()
-	equ.mem.pop()
-	equ.mem.push(solution)
-	equ.root = null
-	equ.add_right = null
-	equ.last_op = "="
-}
-e("equals-btn").addEventListener("click", equals)
-
-const num = (digit) => () => {
-	const n = init()
-	if (equ.last_op === "=")
-		display.set(digit)
-	else
-		display.set(Number(n) ? n + digit : digit)
-}
+// operation btns
 
 document.querySelector("main").addEventListener("keydown", ({ key }) => {
 	if (Number(key)) {
 		const digit = Number(key)
-		num(digit)()
-		return;
+		number(digit)()
 	}
-	switch (key) {
-		case "Backspace":
-			const backed = backspace()
-			if (backed)
-				clear()
-			break;
-		case "t":
-		case "+":
-			add_or_subtract("t")()
-			break;
-		case "-":
-			add_or_subtract("-")()
-		case "x":
-		case "*":
-			mult_or_div("x")()
-		case "/":
-			mult_or_div("/")()
-		case "Enter":
-			equals()
-	}
+	else
+		switch (key) {
+			case "Backspace":
+				const backed = backspace()
+				if (backed)
+					clear()
+				break;
+			case "t":
+			case "+":
+				add()
+				break;
+			case "-":
+				subtract()
+			case "x":
+			case "*":
+				multiply()
+			case "/":
+				divide()
+			case "Enter":
+				equals()
+		}
 })
