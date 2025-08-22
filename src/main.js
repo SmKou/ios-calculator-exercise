@@ -10,7 +10,10 @@ const calc = {
 	sol: []
 }
 
-e("clear-btn").addEventListener("click", () => { set("") })
+e("clear-btn").addEventListener("click", () => {
+	calc.num = ""
+	set(calc.num)
+})
 
 e("backspace-btn").addEventListener("click", () => {
 	const n = get()
@@ -37,24 +40,32 @@ const operate = (sym, left, right) => {
 	}
 }
 
+const use_last_sol = () => calc.sol.push(calc.num || calc.sol.at(-1))
+
+const use_operate = () => {
+	const last = calc.sol.pop()
+	const sol = operate(calc.last_op, last, calc.num)
+	calc.sol.push(s)
+	calc.num = ""
+	set(calc.num)
+}
+
 const solve = (sym) => () => {
 	if (calc.last_op === "=")
-		if (calc.num)
-			calc.sol.push(calc.num)
-		else
-			calc.sol.push(calc.sol.at(-1))
+		use_last_sol()
 	else {
-		const last = sol.pop()
-		const n = Number(get())
-		const s = operate(calc.last_op, last, n)
-		calc.sol.push(s)
-		calc.num = ""
+		use_operate()
 		calc.last_op = sym
-		set(calc.num)
 	}
 }
 
-e("addition-btn").addEventListener("click", solve("t"))
+e("addition-btn").addEventListener("click", () => {
+	if (calc.last_op === "=")
+		use_last_sol()
+	else {
+		use_operate("t")
+	}
+})
 
 e("subtraction-btn").addEventListener("click", solve("-"))
 
@@ -70,8 +81,7 @@ e("equals-btn").addEventListener("click", () => {
 for (let i = 0; i < 10; ++i) {
 	const btn = e(`n${i}-btn`)
 	const fn = () => {
-		const last = calc.num
-		calc.num += last + i
+		calc.num += i
 		set(calc.num)
 	}
 	btn.addEventListener("click", fn)
