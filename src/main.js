@@ -1,5 +1,8 @@
 import './style.css'
 
+localStorage.setItem("test-key", "daily-001-calculator")
+console.log("entered", localStorage.getItem("test-key"))
+
 const e = id => document.getElementById(id)
 const get = () => e("display").innerHTML
 const set = (txt) => e("display").innerHTML = txt
